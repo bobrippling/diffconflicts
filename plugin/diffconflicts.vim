@@ -1,23 +1,12 @@
 " Two-way diff each side of a file with Git conflict markers
-" Maintainer: Seth House <seth@eseth.com>
 " License: MIT
-
-if exists("g:loaded_diffconflicts")
-    finish
-endif
-let g:loaded_diffconflicts = 1
 
 let s:save_cpo = &cpo
 set cpo&vim
 
-" CONFIGURATION
-if !exists("g:diffconflicts_vcs")
-    " Default to git
-    let g:diffconflicts_vcs = "git"
-endif
+let g:diffconflicts_vcs = get(g:, "diffconflicts_vcs", "git")
 
-let g:loaded_diffconflicts = 1
-function! s:hasConflicts()
+function! s:has_conflicts()
     try
         silent execute "%s/^<<<<<<< //gn"
         return 1
@@ -27,24 +16,23 @@ function! s:hasConflicts()
 endfunction
 
 function! s:diffconfl()
-    let l:origBuf = bufnr("%")
-    let l:origFt = &filetype
+    let l:orig_buf = bufnr("%")
+    let l:orig_ft = &filetype
 
     if g:diffconflicts_vcs == "git"
         " Obtain the git setting for the conflict style.
-        let l:conflictStyle = 'diff3' "system('git config --get merge.conflictStyle')[:-2]
+        let l:conflict_style = 'diff3'
     else
         " Assume 2way conflict style otherwise.
-        let l:conflictStyle = "diff"
+        let l:conflict_style = "diff"
     endif
 
     " Set up the right-hand side.
-    rightb vsplit
-    enew
-    silent execute "read #". l:origBuf
-    1delete
-    silent execute "file RCONFL"
-    silent execute "set filetype=". l:origFt
+    rightb vnew
+    silent execute "read #". l:orig_buf
+    1delete_
+    silent 0file
+    silent execute "set filetype=". l:orig_ft
     diffthis " set foldmethod before editing
     silent execute "g/^<<<<<<< /,/^=======\\r\\?$/d"
     silent execute "g/^>>>>>>> /d"
@@ -53,7 +41,7 @@ function! s:diffconfl()
     " Set up the left-hand side.
     wincmd p
     diffthis " set foldmethod before editing
-    if l:conflictStyle ==? "diff3" || l:conflictStyle ==? "zdiff3"
+    if l:conflict_style ==# "diff3"
         silent execute "g/^||||||| \\?/,/^>>>>>>> /d"
     else
         silent execute "g/^=======\\r\\?$/,/^>>>>>>> /d"
@@ -63,15 +51,9 @@ function! s:diffconfl()
     diffupdate
 endfunction
 
-function! s:showHistory()
-    " Create the tab and windows.
+function! s:show_history()
     tabnew
-    vsplit
-    vsplit
-    wincmd h
-    wincmd h
 
-    " Populate each window.
     if g:diffconflicts_vcs == "hg"
         buffer ~local.
         file LOCAL
@@ -81,22 +63,20 @@ function! s:showHistory()
     setlocal nomodifiable readonly
     diffthis
 
-    wincmd l
     if g:diffconflicts_vcs == "hg"
-        buffer ~base.
+        vert sbuffer ~base.
         file BASE
     else
-        buffer BASE
+        vert sbuffer BASE
     endif
     setlocal nomodifiable readonly
     diffthis
 
-    wincmd l
     if g:diffconflicts_vcs == "hg"
-        buffer ~other.
+        vert sbuffer ~other.
         file OTHER
     else
-        buffer REMOTE
+        vert sbuffer REMOTE
     endif
     setlocal nomodifiable readonly
     diffthis
@@ -105,7 +85,7 @@ function! s:showHistory()
     wincmd h
 endfunction
 
-function! s:checkThenShowHistory()
+function! s:check_then_show_history()
     if g:diffconflicts_vcs == "hg"
         let l:filecheck = 'v:val =~# "\\~base\\." || v:val =~# "\\~local\\." || v:val =~# "\\~other\\."'
     else
@@ -123,35 +103,31 @@ function! s:checkThenShowHistory()
         \   l:filecheck
         \ )
 
-    if (len(l:xs) < 3)
-        echohl WarningMsg
-            \ | echo "Missing one or more of BASE, LOCAL, REMOTE."
+    if len(l:xs) < 3
+        echoerr "Missing one or more of BASE, LOCAL, REMOTE."
             \   ." Was Vim invoked by a Git mergetool?"
-            \ | echohl None
-        return 1
-    else
-        call s:showHistory()
-        return 0
+        return
     endif
+
+    call s:show_history()
 endfunction
 
-function! s:checkThenDiff()
-    if (s:hasConflicts())
-        redraw
+function! s:check_then_diff()
+    if s:has_conflicts()
         echohl WarningMsg
-            \ | echon "Resolve conflicts leftward then save. Use :cq to abort."
-            \ | echohl None
-        return s:diffconfl()
+        echon "Resolve conflicts leftward then save. Use :cq to abort"
+        echohl None
+
+        call s:diffconfl()
     else
-        echohl WarningMsg | echo "No conflict markers found." | echohl None
+        echohl WarningMsg
+        echo "No conflict markers found"
+        echohl None
     endif
 endfunction
 
-command! DiffConflicts call s:checkThenDiff()
-command! DiffConflictsShowHistory call s:checkThenShowHistory()
-command! DiffConflictsWithHistory call s:checkThenShowHistory()
-    \ | 1tabn
-    \ | call s:checkThenDiff()
+command! DiffConflicts call s:check_then_diff()
+command! DiffConflictsShowHistory call s:check_then_show_history()
 
 let &cpo = s:save_cpo
 unlet s:save_cpo
