@@ -32,7 +32,7 @@ function! s:diffconfl()
 
     if g:diffconflicts_vcs == "git"
         " Obtain the git setting for the conflict style.
-        let l:conflictStyle = system("git config --get merge.conflictStyle")[:-2]
+        let l:conflictStyle = 'diff3' "system('git config --get merge.conflictStyle')[:-2]
     else
         " Assume 2way conflict style otherwise.
         let l:conflictStyle = "diff"
