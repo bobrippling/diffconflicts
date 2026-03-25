@@ -3,33 +3,51 @@
 This plugin converts a file containing Git conflict markers into a two-way diff
 in Vimdiff. Additional mappings can be given to see the full three-way diff.
 
+CONFIGURATION
+
 Configure this plugin as a mergetool in Git via the following shell commands:
 
-git config --global merge.tool diffconflicts
-git config --global mergetool.diffconflicts.cmd 'vim -c DiffConflicts "$MERGED" "$BASE" "$LOCAL" "$REMOTE"'
-git config --global mergetool.diffconflicts.trustExitCode true
-git config --global mergetool.keepBackup false
+>
+	git config --global merge.tool diffconflicts
+	git config --global mergetool.diffconflicts.cmd 'vim -c DiffConflicts "$MERGED" "$BASE" "$LOCAL" "$REMOTE"'
+	git config --global mergetool.diffconflicts.trustExitCode true
+	git config --global mergetool.keepBackup false
+<
 
 For Mercurial use the following settings in your .hgrc:
 
-[merge-tools]
-diffconflicts.executable=vim
-diffconflicts.args=-c 'let g:diffconflicts_vcs="hg"' -c DiffConflicts "$output" $base $local $other
-diffconflicts.premerge=keep
-diffconflicts.check=conflicts
+>
+	[merge-tools]
+	diffconflicts.executable=vim
+	diffconflicts.args=-c 'let g:diffconflicts_vcs="hg"' -c DiffConflicts "$output" $base $local $other
+	diffconflicts.premerge=keep
+	diffconflicts.check=conflicts
+<
 
-Commands:
-:DiffConflicts
+For JJ, use:
+
+>
+	[merge-tools.diffconflicts]
+	program = "vim"
+	merge-args = [
+	    "-c", "DiffConflicts",
+	    "$output"
+	]
+	merge-tool-edits-conflict-markers = true
+	conflict-marker-style = "git"
+<
+
+COMMANDS
+						*:DiffConflicts*
+*:DiffConflicts*
 	Convert a file containing Git conflict markers into a two-way diff.
 
-:DiffConflictsShowHistory
+						*:DiffConflictsShowHistory*
+*:DiffConflictsShowHistory*
         Open a new tab containing the merge base and the local and remote
         version of the conflicted file.
 
-:DiffConflictsWithHistory
-	Call both DiffConflicts and DiffConflictsShowHistory. This is useful in
-	the Git mergetool configuration to always open the history by default.
+SETTINGS					*DiffConflicts-settings*
 
-						*DiffConflicts-settings*
-        Use g:diffconflicts_vcs to indicate which version control system produced
-        the conflict file (Git or Mercurial).
+Use *g:diffconflicts_vcs* to indicate which version control system produced
+the conflict file (Git or Mercurial).
