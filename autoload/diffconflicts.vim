@@ -238,36 +238,3 @@ endfunction
 function! s:vnew_end() abort
   setlocal nomodifiable readonly buftype=nofile bufhidden=hide nobuflisted nowrap
 endfunction
-
-function! diffconflicts#show_history() abort
-  tabnew
-
-  if g:diffconflicts_vcs == "hg"
-    buffer ~local.
-    file LOCAL
-  else
-    buffer LOCAL
-  endif
-  setlocal nomodifiable readonly
-  diffthis
-
-  if g:diffconflicts_vcs == "hg"
-    vert sbuffer ~base.
-    file BASE
-  else
-    vert sbuffer BASE
-  endif
-  setlocal nomodifiable readonly
-  diffthis
-
-  if g:diffconflicts_vcs == "hg"
-    vert sbuffer ~other.
-    file OTHER
-  else
-    vert sbuffer REMOTE
-  endif
-  setlocal nomodifiable readonly
-  diffthis
-
-  wincmd h
-endfunction
