@@ -42,7 +42,7 @@ function! diffconflicts#split() abort
 
   call s:vnew_end()
 
-  wincmd t
+  wincmd p
   diffthis " set foldmethod before editing
 
   let diff3 = search('^||||||| \?') > 0
@@ -115,6 +115,10 @@ function! s:split_jj(orig_buf, orig_ft) abort
     endfor
   endfor
 
+  let win_cur = win_getid()
+  if win_cur == 0
+    throw "couldn't get current window id"
+  endif
   let [first; sides] = keys(sides)
 
   for side in sides
@@ -126,7 +130,7 @@ function! s:split_jj(orig_buf, orig_ft) abort
     call s:vnew_end()
   endfor
 
-  wincmd t
+  call win_gotoid(win_cur)
   set nowrap
   call s:jj_reduce_conflict(first, groups)
   difft
